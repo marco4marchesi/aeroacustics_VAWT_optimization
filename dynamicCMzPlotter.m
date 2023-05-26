@@ -11,8 +11,7 @@ matlabCodesPath = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\Qu
 % select simulations to extract
 simulationsFolderPath = [   "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\";
                             "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform2\";
-                            "E:\UNI - fisso\aeroacustica\unsteady_3_profili_nominal\";
-                            "\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform6\";];
+                            "E:\UNI - fisso\aeroacustica\unsteady_3_profili_nominal\"];
 
 % "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\";
 % "\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform6\";
@@ -44,6 +43,9 @@ for j = 1:length(simulationsFolderPath)
         for i = 1:length(history_files)
     
             h_p = readmatrix(simulationsFolderPath(j)+history_files(i).name);
+            if simulationsFolderPath(j)+history_files(i).name == "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\history_02334.dat"
+                h_p = h_p(1:2:end,:);
+            end
             restart_iter = str2double(erase(history_files(i).name,["history_",".dat"]));
             if restart_iter < length(history)
                 iter_to_overwrite = size(history,1)-restart_iter;

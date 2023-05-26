@@ -28,8 +28,8 @@ for i = 1:length(obs_folders)
     % retrieve positions and angles
     radiuses{i} = str2double(erase(obs_folders(i).name,"observer_"));
     flow.points{i} = readmatrix(folder+"/"+obs_folders(i).name+"/Observer_Locations.dat");
-    flow.pointMatX = [flow.pointMatX, flow.points{i}(:,1)];
-    flow.pointMatY = [flow.pointMatY, flow.points{i}(:,2)];
+    flow.pointMatX = [flow.pointMatX, [flow.points{i}(:,1);flow.points{i}(1,1)]];
+    flow.pointMatY = [flow.pointMatY, [flow.points{i}(:,2);flow.points{i}(1,2)]];
     
 
     flow.theta_obs{i} = atan2(flow.points{i}(:,2),flow.points{i}(:,1));
@@ -39,7 +39,7 @@ for i = 1:length(obs_folders)
     flow.SPL_thickness{i} = spl(flow.Thickness_rms{i});
     flow.SPL_loading{i} = spl(flow.Loading_rms{i});
     
-    flow.p_rmsMat = [flow.p_rmsMat, flow.SPL_p{i}'];
+    flow.p_rmsMat = [flow.p_rmsMat, [flow.SPL_p{i},flow.SPL_p{i}(1)]'];
 
     % retrieve average noise
     flow.dB_total{i} = load(folder+"/"+obs_folders(i).name+"/pp_FWH");
@@ -64,8 +64,55 @@ end
 % mettere che controlla se ci sono history restart e prende l'ultimo, se no
 % è un casotto. e poi come al solito deve prendere solo un giro se no non
 % sono comparabili
+% history_files = dir(folder+"\history*");
+% history = readmatrix(folder+"/"+history_files(end).name);
+
+
 history_files = dir(folder+"\history*");
-history = readmatrix(folder+"/"+history_files(end).name);
+    len = 0;
+    history = [];
+    if length(history_files)~=1
+        for i = 1:length(history_files)
+    
+            h_p = readmatrix(folder+"/"+history_files(i).name);
+            if folder+"/"+history_files(i).name == "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\history_02334.dat"
+                h_p = h_p(1:2:end,:);
+            end
+            restart_iter = str2double(erase(history_files(i).name,["history_",".dat"]));
+            if restart_iter < length(history)
+                iter_to_overwrite = size(history,1)-restart_iter;
+            else
+                iter_to_overwrite = 0;
+            end
+            history = history(1:end-iter_to_overwrite,:);
+            history(len+1-iter_to_overwrite:len+length(h_p)-iter_to_overwrite,:) = h_p;
+            
+            len = length(history);
+            
+
+            if i == length(history_files)
+
+                iterations_lost = str2double(erase(history_files(end).name,["history_",".dat"]))+length(h_p)-len;
+                if iterations_lost  > 0
+                    time_loss = (iterations_lost-368*8e-4/dt) * dt ;  
+                else
+                    time_loss = 0;
+                end
+            end
+        end
+    else
+           
+        history = readmatrix(folder+"/"+history_files.name);
+        iterations_lost = 0;
+        time_loss = 0;
+    end
+
+
+
+
+
+
+
 flow.CD = history(end-(N_iter_per_round-1):end,9);
 flow.CL = history(end-(N_iter_per_round-1):end,10);
 flow.CMz = history(end-(N_iter_per_round-1):end,11);

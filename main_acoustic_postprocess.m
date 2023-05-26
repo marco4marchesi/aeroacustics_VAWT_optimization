@@ -8,15 +8,37 @@ structure of the directories:
 - matlab scripts in the "postProcess" folder: in this folder you will have
 all your matlab scripts
 
+% simulationsFolderPath:
+% this changes depending on your pc, I have all the simulations as
+% subfolder (test case) in a single mother folder that I put here:
+% remember to put the "\" at the end of the string...
+
+
 %}
 
 %% init - do not modify
 clear;  clc; close all;
 main_folder = pwd;
+
+% who uses this script? select user
 user = 'marco';
-imagesPath = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\varie";
+
+
+switch user
+    case 'marco'
+        imagesPath = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\varie";
+        simulationsFolderPath = 'E:\UNI - fisso\aeroacustica\';
+    case 'fra'
+        imagesPath = [];
+        simulationsFolderPath = [];
+    case 'adri'
+        imagesPath = [];
+        simulationsFolderPath = [];
+end
+
 addpath(pwd)
 matlab_graphics;
+
 
 
 %% simulation data
@@ -24,18 +46,14 @@ omega = 21.33;
 f = omega/(2*pi);
 
 %% post process - which script do you want to run?
+testcase_folder = 'unsteady_3_profili_nominal';
+flow_unst_3_nominal = acousticPostProcess([simulationsFolderPath,testcase_folder], 2e-4, 1472);
+
+testcase_folder = 'unsteady_3_profili_deform2';
+flow_unst_3_deform2 = acousticPostProcess([simulationsFolderPath,testcase_folder], 1e-4, 2944);
+
 testcase_folder = 'unsteady_3_profili_deform6';
-su2_folder = ['E:\UNI - fisso\aeroacustica\',testcase_folder];
-flow_unst_3_deform6 = acousticPostProcess(su2_folder, 2e-4, 1472);
-
-% testcase_folder = 'unsteady_3_profili_deform6';
-% su2_folder = ['\\wsl.localhost\ubuntu-20.04\home\',user,'\',testcase_folder];
-% flow_unst_3_deform6 = acousticPostProcess(su2_folder, 2e-4, 1472);
-% 
-% testcase_folder = 'unsteady_3_profili_nominal';
-% su2_folder = ['\\wsl.localhost\ubuntu-20.04\home\',user,'\',testcase_folder];
-% flow_unst_3_nominal = acousticPostProcess(su2_folder, 2e-4, 1472);
-
+flow_unst_3_deform6 = acousticPostProcess([simulationsFolderPath,testcase_folder], 1e-4, 2944);
 
 %% plots
 pixel_x = 600;
@@ -43,56 +61,49 @@ pixel_y = 500;
 
 
 %% 5 metri
+% p rms (total)
 fig_polar_directivity_p = figure('Position',[100,100,pixel_x,pixel_y]);
-% polarplot(flow_unst_3_nominal.theta_obs{1},flow_unst_3_nominal.SPL_p{1},'r-*','DisplayName','Nominal');
-% hold on;
-% polarplot(flow_unst_3_deform1.theta_obs{1},flow_unst_3_deform1.SPL_p{1},'g-*','DisplayName','Deform 1');
-polarplot(flow_unst_3_deform6.theta_obs{1},flow_unst_3_deform6.SPL_p{1},'b-*','DisplayName','Deform 6');
+polarplot(flow_unst_3_nominal.theta_obs{1},flow_unst_3_nominal.SPL_p{1},'r-*','DisplayName','3p Nominal');
+hold on;
+polarplot(flow_unst_3_deform2.theta_obs{1},flow_unst_3_deform2.SPL_p{1},'g-*','DisplayName','3p Deform 2');
+polarplot(flow_unst_3_deform6.theta_obs{1},flow_unst_3_deform6.SPL_p{1},'b-*','DisplayName','3p Deform 6');
 legend
-rlim([50,75])
 title("Unsteady $SPL$ p rms")
 % exportgraphics(fig_polar_directivity_p,imagesPath+"/directivity_p.png")
-pointMatrix.X = [flow_unst_3_deform6.points{1}(:,1),flow_unst_3_deform6.points{2}(:,1),flow_unst_3_deform6.points{3}(:,1)];
-pointMatrix.Y = [flow_unst_3_deform6.points{1}(:,2),flow_unst_3_deform6.points{2}(:,2),flow_unst_3_deform6.points{3}(:,2)];
-pointMatrix.Z = [flow_unst_3_deform6.SPL_p{1}',flow_unst_3_deform6.SPL_p{2}',flow_unst_3_deform6.SPL_p{3}'];
 
+% thickness
+fig_polar_directivity_thickness = figure('Position',[100,100,pixel_x,pixel_y]);
+polarplot(flow_unst_3_nominal.theta_obs{1},flow_unst_3_nominal.SPL_thickness{1},'r-*','DisplayName','Nominal');
+hold on;
+polarplot(flow_unst_3_deform2.theta_obs{1},flow_unst_3_deform2.SPL_thickness{1},'g-*','DisplayName','Deform 2');
+polarplot(flow_unst_3_deform6.theta_obs{1},flow_unst_3_deform6.SPL_thickness{1},'b-*','DisplayName','Deform 6');
+legend
+title("$SPL$ thickness rms")
+% exportgraphics(fig_polar_directivity_thickness,imagesPath+"/directivity_thickness.png")
+ 
+% loading
+fig_polar_directivity_loading = figure('Position',[100,100,pixel_x,pixel_y]);
+polarplot(flow_unst_3_nominal.theta_obs{1},flow_unst_3_nominal.SPL_loading{1},'r-*','DisplayName','Nominal');
+hold on;
+polarplot(flow_unst_3_deform2.theta_obs{1},flow_unst_3_deform2.SPL_loading{1},'g-*','DisplayName','Deform 2');
+polarplot(flow_unst_3_deform6.theta_obs{1},flow_unst_3_deform6.SPL_loading{1},'b-*','DisplayName','Deform 6');
+legend
+title("$SPL$ loading rms")
+% exportgraphics(fig_polar_directivity_loading,imagesPath+"/directivity_loading.png")
+
+% 3D directivity
 fig_3D_directivity = figure('Position',[100,100,pixel_x,pixel_y]);
-surf(pointMatrix.X,pointMatrix.Y, pointMatrix.Z)
+surf(flow_unst_3_deform6.pointMatX,flow_unst_3_deform6.pointMatY, flow_unst_3_deform6.p_rmsMat)
 axis equal
 xlabel('x [m]')
 ylabel('y [m]')
 zlabel('SPL(p) [dB]')
 colorbar
-% fig_polar_directivity_thickness = figure('Position',[100,100,pixel_x,pixel_y]);
-% polarplot(flow_unst_3_nominal.theta_obs{1},flow_unst_3_nominal.SPL_thickness{1},'r-*','DisplayName','Nominal');
-% hold on;
-% polarplot(flow_unst_3_deform1.theta_obs{1},flow_unst_3_deform1.SPL_thickness{1},'g-*','DisplayName','Deform 1');
-% polarplot(flow_unst_3_deform6.theta_obs{1},flow_unst_3_deform6.SPL_thickness{1},'b-*','DisplayName','Deform 6');
-% thetalim([0 360])
-% rlim([20 32])
-% legend
-% title("$SPL$ thickness rms")
-% % % exportgraphics(fig_polar_directivity_thickness,imagesPath+"/directivity_thickness.png")
-% 
-% 
-% 
-% fig_polar_directivity_loading = figure('Position',[100,100,pixel_x,pixel_y]);
-% polarplot(flow_unst_3_nominal.theta_obs{1},flow_unst_3_nominal.SPL_loading{1},'r-*','DisplayName','Nominal');
-% hold on;
-% polarplot(flow_unst_3_deform1.theta_obs{2},flow_unst_3_deform1.SPL_loading{1},'g-*','DisplayName','Deform 1');
-% polarplot(flow_unst_3_deform6.theta_obs{3},flow_unst_3_deform6.SPL_loading{1},'b-*','DisplayName','Deform 6');
-% thetalim([0 360])
-% rlim([50 80])
-% legend
-% title("$SPL$ loading rms")
-% exportgraphics(fig_polar_directivity_loading,imagesPath+"/directivity_loading.png")
+% exportgraphics(fig_3D_directivity,imagesPath+"/3D_directivity_p.png")
 
 
 
-
-
-
-
+%%
 % fig_acoustic_pressure = figure('Position',[100,100,pixel_x,pixel_y]);
 % plot(flow_unst_3_deform1.pp001(:,1),flow_unst_3_deform1.pp001(:,3),'DisplayName','unst def1')
 % hold on;
