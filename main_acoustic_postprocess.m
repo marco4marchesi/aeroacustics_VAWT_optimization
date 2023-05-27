@@ -108,16 +108,13 @@ colorbar
 % plot(flow_unst_3_deform1.pp001(:,1),flow_unst_3_deform1.pp001(:,3),'DisplayName','unst def1')
 % hold on;
 % plot(flow_unst_3_deform6.pp001(:,1),flow_unst_3_deform6.pp001(:,3),'DisplayName','unst def6')
-% 
-% % plot(flow_rrf_single.pp001(:,1),flow_rrf_single.pp001(:,3),'MarkerSize',8,'DisplayName','RRF 1')
-% % plot(flow_unsteady.pp001(:,1),flow_unsteady.pp001(:,3),'MarkerSize',8,'DisplayName','Unsteady')
-% legend
-% xlabel('Time [s]')
-% ylabel('Acoustic pressure [Pa]')
+
+% plot(flow_rrf_single.pp001(:,1),flow_rrf_single.pp001(:,3),'MarkerSize',8,'DisplayName','RRF 1')
+% plot(flow_unsteady.pp001(:,1),flow_unsteady.pp001(:,3),'MarkerSize',8,'DisplayName','Unsteady')
 % exportgraphics(fig_acoustic_pressure,imagesPath+"/acoustic_pressure.png")
 
 %% FFT analysis
-
+% 
 % [flow_unst_3_deform6.pp001_fft_f,flow_unst_3_deform6.pp001_fft] = fourierSingleSided(1/(2e-4), flow_unst_3_deform6.pp001(last_lap_indexes,3)-mean(flow_unst_3_deform6.pp001(last_lap_indexes,3)));
 % fig_fft = figure('Position',[100,100,pixel_x,pixel_y]);
 % % plot(flow_unsteady.pp001_fft_f,flow_unsteady.pp001_fft,'DisplayName','Unsteady')
@@ -131,4 +128,22 @@ colorbar
 % xline(4*f,'b-.',num2str(4*f),'DisplayName','4/T','LineWidth',2)
 % xlim([0,100])
 % exportgraphics(fig_fft,imagesPath+"/fft_acoustic_pressure.png")
-
+%%
+figure
+hold on
+% plot(flow_unst_3_nominal.time(2:end),flow_unst_3_nominal.dCL/1000,'--');
+% plot(flow_unst_3_nominal.time(2:end),flow_unst_3_nominal.dCD/1000,'--');
+plot(flow_unst_3_nominal.time,flow_unst_3_nominal.pp010r10{1,2}(:,5));
+plot(flow_unst_3_nominal.time(2:end),flow_unst_3_nominal.dCF/1000);
+legend('Acoustic Pressure','dCF')
+%%
+figure
+hold on
+plot(flow_unst_3_nominal.time,flow_unst_3_nominal.pp010r10{1,2}(:,4));
+plot(flow_unst_3_nominal.time,flow_unst_3_nominal.equivalent_speed/100000);
+%%
+for ii=1:120
+    edf(ii) = diff(flow_unst_3_nominal.(strcat('pp',num2str(ii,'%03d'),'r10')){1,2}(1:2,1));
+end
+polarplot([0:3:357]*pi/180,edf)
+rlim([3.94e-4,3.9451e-4])

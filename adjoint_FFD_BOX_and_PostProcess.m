@@ -13,10 +13,10 @@ FFD_DEFINITION = (airfoil, -0.02, 0.74, 0.0, 0.0575, 0.74, 0.0, 0.0575, 0.76, 0.
 
 clear; close all; clc; 
 folder = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\varie\";
-simulationsAdjointPath = "\\wsl.localhost\Ubuntu-20.04\home\marco\testAdjoint_drag-1\DESIGNS\";
+simulationsAdjointPath = "\\wsl.localhost\Ubuntu-20.04\home\marco\testAdjoint_momentZ_30pti2\DESIGNS\";
 list = dir(simulationsAdjointPath+"DSN*");
-simulationsDeformPath = simulationsAdjointPath + "DSN_" + compose("%03d",length(list))+ "\DEFORM\";
-% simulationsDeformPath = simulationsAdjointPath + "DSN_" + compose("%03d",15)+ "\DEFORM\";
+% simulationsDeformPath = simulationsAdjointPath + "DSN_" + compose("%03d",length(list)-1)+ "\DEFORM\";
+simulationsDeformPath = simulationsAdjointPath + "DSN_" + compose("%03d",15)+ "\DEFORM\";
 simulationsBaseGeoPath = erase(simulationsAdjointPath,"DESIGNS\");
 
 matlab_graphics;
@@ -220,7 +220,7 @@ end
 legend
 
 %% generate 3 profile mesh
-N_profili = 3;
+N_profili = 5;
 theta_vec = linspace(0,-2*pi,N_profili+1); % senso orario per consistenza
 Rot = @(theta) [cos(theta) -sin(theta) 0; sin(theta) cos(theta) 0; 0 0 1];
 for i = 1:N_profili
