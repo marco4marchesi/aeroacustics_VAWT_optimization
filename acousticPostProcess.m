@@ -1,4 +1,4 @@
-function flow = acousticPostProcess(folder, dt, N_iter_per_round)
+function flow = acousticPostProcess(folder, dt)
 
 %{
 HELP:
@@ -6,6 +6,9 @@ function that retrieves all the acoustic interesting properties and saves
 them in the struct flow
 %}
 
+% define some useful data
+dt_ref = 8e-4;
+N_iter_per_round = dt_ref/dt * 368;
 % define transformation to decibel
 spl = @(x) 20*log10(x/(20e-6));
 
@@ -15,6 +18,12 @@ sound_speed = sqrt(1.4*287*288.15);
 
 % loop on different radius length
 obs_folders = dir(folder+"\observer_*");
+
+% initialise vectors
+flow.pointMatX = [];
+flow.pointMatY = [];
+flow.p_rmsMat = [];
+
 for i = 1:length(obs_folders)
     n_obs(i) = length(dir(folder+"/"+obs_folders(i).name+"/pp_FWH_*"));
     
@@ -48,7 +57,7 @@ for i = 1:length(obs_folders)
         flow.(ppName){i} = readmatrix(folder+"/"+obs_folders(i).name+"/pp_FWH_"+compose("%03d",k)+"_Zone_0");
     end
     
-    last_lap_indexes = length(flow.(ppName){i})-2*368:length(flow.(ppName){i});
+    last_lap_indexes = length(flow.(ppName){i})-N_iter_per_round:length(flow.(ppName){i});
     ppName_f = ppName+"_f";
     ppName_fft = ppName+"_fft";
     %[flow.(ppName_f){i},flow.(ppName_fft){i}] = fourierSingleSided(1/(4e-4), flow.(ppName){i}(last_lap_indexes,3)-mean(flow.(ppName){i}(last_lap_indexes,3)));
@@ -101,11 +110,6 @@ history_files = dir(folder+"\history*");
         iterations_lost = 0;
         time_loss = 0;
     end
-
-
-
-
-
 
 
 flow.CD = history(end-(N_iter_per_round-1):end,9);

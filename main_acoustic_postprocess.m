@@ -47,13 +47,16 @@ f = omega/(2*pi);
 
 %% post process - which script do you want to run?
 testcase_folder = 'unsteady_3_profili_nominal';
-flow_unst_3_nominal = acousticPostProcess([simulationsFolderPath,testcase_folder], 2e-4, 1472);
+flow_unst_3_nominal = acousticPostProcess([simulationsFolderPath,testcase_folder], 2e-4);
 
 testcase_folder = 'unsteady_3_profili_deform2';
-flow_unst_3_deform2 = acousticPostProcess([simulationsFolderPath,testcase_folder], 1e-4, 2944);
+flow_unst_3_deform2 = acousticPostProcess([simulationsFolderPath,testcase_folder], 1e-4);
 
 testcase_folder = 'unsteady_3_profili_deform6';
-flow_unst_3_deform6 = acousticPostProcess([simulationsFolderPath,testcase_folder], 1e-4, 2944);
+flow_unst_3_deform6 = acousticPostProcess([simulationsFolderPath,testcase_folder], 1e-4);
+
+testcase_folder = 'unsteady_1_profilo_deform6';
+flow_unst_1_deform6 = acousticPostProcess([simulationsFolderPath,testcase_folder], 2e-4);
 
 %% plots
 pixel_x = 600;
@@ -133,17 +136,19 @@ figure
 hold on
 % plot(flow_unst_3_nominal.time(2:end),flow_unst_3_nominal.dCL/1000,'--');
 % plot(flow_unst_3_nominal.time(2:end),flow_unst_3_nominal.dCD/1000,'--');
-plot(flow_unst_3_nominal.time,flow_unst_3_nominal.pp010r10{1,2}(:,5));
-plot(flow_unst_3_nominal.time(2:end),flow_unst_3_nominal.dCF/1000);
-legend('Acoustic Pressure','dCF')
+
+plot((flow_unst_3_nominal.pp010r10{1,2}(:,1)-flow_unst_3_nominal.pp010r10{1,2}(1,1)),flow_unst_3_nominal.pp010r10{1,2}(:,5));
+plot(flow_unst_3_nominal.time(2:end)-flow_unst_3_nominal.time(2),flow_unst_3_nominal.dCF/1000);
+legend('Loading','dCF')
 %%
 figure
 hold on
 plot(flow_unst_3_nominal.time,flow_unst_3_nominal.pp010r10{1,2}(:,4));
 plot(flow_unst_3_nominal.time,flow_unst_3_nominal.equivalent_speed/100000);
 %%
+figure
 for ii=1:120
-    edf(ii) = diff(flow_unst_3_nominal.(strcat('pp',num2str(ii,'%03d'),'r10')){1,2}(1:2,1));
+    edf(ii) = diff(flow_unst_1_deform6.(strcat('pp',num2str(ii,'%03d'),'r10')){1,2}(1:2,1));
 end
 polarplot([0:3:357]*pi/180,edf)
-rlim([3.94e-4,3.9451e-4])
+rlim([1.98e-4,1.988e-4])
