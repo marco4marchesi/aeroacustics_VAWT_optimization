@@ -12,8 +12,8 @@ FFD_DEFINITION = (airfoil, -0.02, 0.74, 0.0, 0.0575, 0.74, 0.0, 0.0575, 0.76, 0.
 
 
 clear; close all; clc; 
-folder = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\varie\";
-simulationsAdjointPath = "\\wsl.localhost\Ubuntu-20.04\home\marco\testAdjoint_momentZ_30pti2\DESIGNS\";
+folder_varie = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\varie\";
+simulationsAdjointPath = "\\wsl.localhost\Ubuntu-20.04\home\marco\testAdjoint_momentZ_30pti2_deform6\DESIGNS\";
 list = dir(simulationsAdjointPath+"DSN*");
 % simulationsDeformPath = simulationsAdjointPath + "DSN_" + compose("%03d",length(list)-1)+ "\DEFORM\";
 simulationsDeformPath = simulationsAdjointPath + "DSN_" + compose("%03d",15)+ "\DEFORM\";
@@ -21,9 +21,12 @@ simulationsBaseGeoPath = erase(simulationsAdjointPath,"DESIGNS\");
 
 matlab_graphics;
 
+user = 'marco';
+user_settings;
+
 %% user defined properties
 % extract profile points
-profile = readmatrix(folder+"NACA0021.txt");
+profile = readmatrix(folder_varie+"NACA0021.txt");
 profile = profile(2:801, :);
 
 % number of intermediate points per dimension
@@ -134,7 +137,7 @@ end
 axis equal
 xlim([-0.03, 0.07])
 if flag_save
-    exportgraphics(fig_boxAdjoint,folder+"adjoint Box.png")
+    exportgraphics(fig_boxAdjoint,folder_varie+"adjoint Box.png")
 end
 
 %% retrieve deformed profile
@@ -197,8 +200,8 @@ mat = [mat_l;mat_u];
 mat(:,2) = mat(:,2)+0.75;
 
 % recall points
-pointsDeformed = mat(:,3:4);
-pointsBaseProfile = mat(:,1:2);
+pointsDeformed = mat(:,3:4)-[0,0.6];
+pointsBaseProfile = mat(:,1:2)-[0,0.6];
 
 % retrieve coefficients
 history_adj = readmatrix(simulationsDeformPath+"../DIRECT/history_direct.dat");
@@ -220,20 +223,30 @@ end
 legend
 
 %% generate 3 profile mesh
-N_profili = 5;
+N_profili = 3;
 theta_vec = linspace(0,-2*pi,N_profili+1); % senso orario per consistenza
 Rot = @(theta) [cos(theta) -sin(theta) 0; sin(theta) cos(theta) 0; 0 0 1];
 for i = 1:N_profili
     profili{i} = [Rot(theta_vec(i))*[pointsDeformed, zeros(size(pointsDeformed,1),1)]']';
+    profili_nom{i} = [Rot(theta_vec(i))*[pointsBaseProfile, zeros(size(pointsBaseProfile,1),1)]']';
 end
-% 
-% figure
-% hold on; grid on;
-% for idx = 1:N_profili
-%     plot(profili{idx}(:,1),profili{idx}(:,2),"DisplayName",num2str(idx))
-% end
-% axis equal 
 
+figure
+hold on; grid on;
+for idx = 1:N_profili
+    plot(profili{idx}(:,1),profili{idx}(:,2),'k',"DisplayName",num2str(idx))
+end
+axis equal 
+
+fig_posizione3profili = figure();
+hold on; 
+for idx = 1:N_profili
+    plot(profili_nom{idx}(:,1),profili_nom{idx}(:,2),'Color',[0,0,128]./256,"DisplayName",num2str(idx))
+end
+scatter(0,0)
+axis equal
+axis off
+exportgraphics(fig_posizione3profili, '01_posizione3profili.emf')
 
 fid = fopen([num2str(N_profili),'_profile_generator.txt'],'w');
 for j = 1:length(profili)

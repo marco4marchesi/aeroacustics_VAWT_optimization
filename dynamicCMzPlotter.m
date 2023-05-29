@@ -6,21 +6,23 @@ simulationsNames string variable
 %}
 %% init
 clear; close all; clc; 
-matlabCodesPath = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\matlabscripts";
+user = 'marco';
+user_settings;
 
 % select simulations to extract
 simulationsFolderPath = [   "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\";
                             "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform2\";
-                            "E:\UNI - fisso\aeroacustica\unsteady_3_profili_nominal\"];
+                            "E:\UNI - fisso\aeroacustica\unsteady_3_profili_nominal\";
+                           ];
 
-%"\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform6\";
-%"\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform1\";
-%"\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_1_profilo_deform2\";
-%"\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_drag_fixedMoment\"
-%"3p drag fixedMoment",
+% "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\";
+% "\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform6\";
+% "\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform1\";
+% "\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_1_profilo_deform2\";
+% "\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform7\"
 
 % settare questo per i nomi nei plot
-simulationsNames = ["3p deform6","3p drag fixM","3p deform1","3p nominal"]; 
+simulationsNames = ["3p deform6","3p deform2","3p nominal","1p deform7"]; 
 matlab_graphics;
 
 %% extract data
@@ -28,11 +30,17 @@ colors = ['r','b','k','m'];
 omega = 21.33;
 % check how to extract automatically the value for dt
 dt_def = 8e-4;
-dt = 2e-4;
+
 for j = 1:length(simulationsFolderPath)
-    
+    if simulationsFolderPath(j) == "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform2\"
+        dt(j) = 1e-4;
+    else
+        dt(j) = 2e-4;
+    end
+
     history_files = dir(simulationsFolderPath(j)+"history*");
     len = 0;
+    history = [];
     if length(history_files)~=1
         for i = 1:length(history_files)
     
@@ -49,11 +57,18 @@ for j = 1:length(simulationsFolderPath)
             history = history(1:end-iter_to_overwrite,:);
             history(len+1-iter_to_overwrite:len+length(h_p)-iter_to_overwrite,:) = h_p;
             
-            history(len+1:len+length(h_p),:) = h_p;
             len = length(history);
-            iterations_lost(j) = str2double(erase(history_files(end).name,["history_",".dat"]))+length(h_p)-len;
-            time_loss(j) = (iterations_lost(j)-1472) * dt ;  
             
+
+            if i == length(history_files)
+
+                iterations_lost(j) = str2double(erase(history_files(end).name,["history_",".dat"]))+length(h_p)-len;
+                if iterations_lost(j)  > 0
+                    time_loss(j) = (iterations_lost(j)-368*dt_def/dt(j)) * dt(j) ;  
+                else
+                    time_loss(j) = 0;
+                end
+            end
         end
     else
            
@@ -63,14 +78,14 @@ for j = 1:length(simulationsFolderPath)
     end
     %% adjust the coefficient   
     
-    final_phase(j) = rad2deg(length(history(:,1))*dt+iterations_lost(j)*dt)*omega;
-    offset = 50; % offset phase in °, if 0 then it takes a single rotation from multiples of 120°
-    iter_to_remove(j) = round(deg2rad(mod(final_phase(j)+offset,120))/omega/dt);
+    final_phase(j) = rad2deg(length(history(:,1))*dt(j)+iterations_lost(j)*dt(j))*omega;
+    offset = 0; % offset phase in °, if 0 then it takes a single rotation from multiples of 120°
+    iter_to_remove(j) = 0; %round(deg2rad(mod(final_phase(j)+offset,120))/omega/dt(j));
     
     history = history(1:end-iter_to_remove(j),:);
 
     % extract quantities
-    t_vec{j} = [1:length(history(:,1))]*dt;
+    t_vec{j} = [1:length(history(:,1))]*dt(j);
     angle{j} = rad2deg(t_vec{j} * omega);
 
     CMz{j} = history(:,11)/0.75/0.075;
@@ -79,19 +94,25 @@ for j = 1:length(simulationsFolderPath)
     CD{j} = history(:,9);
     CL{j} = history(:,10);
     %% post process
-    time_ratio = dt_def/dt;
-    N_iter_per_round = 368 * time_ratio;
-    N_rounds_to_average(j) = floor(length(history(:,11))/N_iter_per_round);
+    time_ratio = dt_def/dt(j);
+    N_iter_per_round(j) = 368 * time_ratio;
+    N_rounds_to_average(j) = floor(length(history(:,11))/N_iter_per_round(j));
     
     
     if N_rounds_to_average(j) ~= 0
         N_rounds_to_average(j) =1;
-        starting_iter = size(history,1)-N_iter_per_round*N_rounds_to_average(j);
-        for i =  1: N_rounds_to_average(j)
-            CMz_cycle_avg{j}(i) = mean(CMz{j}((i-1)*N_iter_per_round+starting_iter + 1:i*N_iter_per_round+starting_iter));
-        end
+        starting_iter = size(history,1)-N_iter_per_round(j)*N_rounds_to_average(j);
+        CMz_cycle_avg{j} = mean(CMz{j}(starting_iter + 1:starting_iter+N_iter_per_round(j)));
+        CMz_excursion{j} = max(CMz{j}(starting_iter + 1:starting_iter+N_iter_per_round(j)))-min(CMz{j}(starting_iter + 1:starting_iter+N_iter_per_round(j)));
+        CMz_rms{j} = rms(CMz{j}(starting_iter + 1:starting_iter+N_iter_per_round(j))-mean(CMz{j}(starting_iter + 1:starting_iter+N_iter_per_round(j))));
+    
+        fprintf('CMz for %s = %.6d\n',simulationsNames(j),CMz_cycle_avg{j})
+        fprintf('CMz excursion in last cycle for %s = %.3d\n',simulationsNames(j),CMz_excursion{j})
+        fprintf('CMz rms in last cycle for %s = %.3d\n\n',simulationsNames(j),CMz_rms{j})
     else
         CMz_cycle_avg{j} = [];
+        CMz_excursion{j} = [];
+        CMz_rms{j} = [];
     end
 
     % remove variables so they don't overwrite badly
@@ -104,28 +125,22 @@ end
 
 %% plots
 figure('Position',[100,100,600,400])
+subplot(2,1,1)
 for j = 1:length(simulationsFolderPath)
     plot(t_vec{j}+time_loss(j),CMz{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
     hold on; 
     % yline(RRF_CMz_trans_1,'k--',"RRF trans ="+num2str(RRF_CMz_trans_1),'HandleVisibility','off')
     if ~isempty(CMz_cycle_avg{j})
         yline(CMz_cycle_avg{j}(end),[colors(j),'--'],"CMz avg = "+num2str(CMz_cycle_avg{j}(end)),'HandleVisibility','off')
-        xline(t_vec{j}(end-N_rounds_to_average(j)*N_iter_per_round),[colors(j),'-'],"AFH",'HandleVisibility','off')
+        xline(t_vec{j}(end-N_rounds_to_average(j)*N_iter_per_round(j)),[colors(j),'-'],"AFH",'HandleVisibility','off')
     end
 end
 legend
+subplot(2,1,2)
+for j = 1:length(simulationsFolderPath)
+    plot(t_vec{j}+time_loss(j),rms_rho{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
+    hold on; 
+end
+yline(-8,'k--',"target",'HandleVisibility','off')
+legend
 
-% 
-% figure('Position',[100,100,600,400])
-% for j = 3
-%     plot(angle{j},CL{j},'r-','DisplayName',"CL "+simulationsNames(j))
-%     hold on; 
-%     plot(angle{j},CD{j},'b-','DisplayName',"CD "+simulationsNames(j))
-%     plot(angle{j},CMz{j},'k-','DisplayName',"CMz "+simulationsNames(j))
-% end
-% xline(360,'--','DisplayName','360°')
-% xline(450,'--','DisplayName','450°')
-% grid on;
-% xlabel('Angle [°]')
-% ylabel('Coeff [-]')
-% legend

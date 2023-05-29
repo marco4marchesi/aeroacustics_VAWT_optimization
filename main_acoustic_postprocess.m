@@ -24,17 +24,7 @@ main_folder = pwd;
 user = 'marco';
 
 
-switch user
-    case 'marco'
-        imagesPath = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\varie";
-        simulationsFolderPath = 'E:\UNI - fisso\aeroacustica\';
-    case 'fra'
-        imagesPath = [];
-        simulationsFolderPath = [];
-    case 'adri'
-        imagesPath = [];
-        simulationsFolderPath = [];
-end
+
 
 addpath(pwd)
 matlab_graphics;
