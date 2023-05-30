@@ -43,23 +43,14 @@ running the code, otherwise it will return errors:
 % user: set who is running the code so that the folder is chosen:
 user = "doppio fisso"; % choices: "doppio fisso" "luca" ...
 
-if user == "doppio fisso"
-    matlabCodesPath = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\matlabscripts";
+switch user 
+    case "doppio fisso"
+    matlabCodesPath = "C:\Users\marco\Desktop\UNI\2 MAGISTRALE\AEROACOUSTICS\aeroacustics_VAWT_optimization";
     %     simulationsFolderPath = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\TerzoSemestre\CFD\PROGETTO CFD DRIVE\SIMULATIONS DRIVE\Simulations"; % drive
-    simulationsFolderPath = "\\wsl.localhost\Ubuntu-20.04\home\marco\aeroProject";
+    simulationsFolderPath = "\\wsl.localhost\Ubuntu-20.04\home\marco\RRF_270";
 end
 
-if user == "doppio portatile"
-    matlabCodesPath = "C:\Users\marco\Desktop\tutto\UNI\2 MAGISTRALE\CFD\CFD PROJECT\progetto_CFD\Codes\matlabCodes";
-    simulationsFolderPath = "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\TerzoSemestre\CFD\PROGETTO CFD DRIVE\SIMULATIONS DRIVE\Simulations";
-    %     simulationsFolderPath = "C:\Users\marco\Desktop\UNI\2 MAGISTRALE\CFD\CFD PROJECT\progetto_CFD\Simulations\"; % locale
-end
 
-if user == "luca"
-    matlabCodesPath = "C:/Users/lucag/Desktop/Universita/Magistrale Secondo Anno/Computational_fluid_dynamics/Progetto_CFD/progetto_CFD/Codes/matlabCodes\";
-    %     simulationsFolderPath = "C:/Users/lucag/Desktop/Universita/Magistrale Secondo Anno/Computational_fluid_dynamics/Progetto_CFD/progetto_CFD/Simulations\";
-    simulationsFolderPath= "C:\Users\lucag\Desktop\Universita\Magistrale Secondo Anno\Computational_fluid_dynamics\Progetto_CFD\progetto_CFD\Simulations";
-end
 
 
 %% init
@@ -87,7 +78,7 @@ cd(simulationsFolderPath)
 %% ------------------------------------ CHOSE SIMULATION (FOLDER) -------------------------------------- %%
 mainFolder =''; %'caseG4_ROE_highMach/';
 simuFolder =''; %'caseG4_A10_newTVD\cfdG4'; % use single apices because otherwise the erase function does not work as I want
-fileName = "history_A.csv";%'history_G4_O2_10g_newTVD.csv';%
+fileName = "history.dat";%'history_G4_O2_10g_newTVD.csv';%
 
 %% LOGARITMIC PLOT
 

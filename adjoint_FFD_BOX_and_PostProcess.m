@@ -200,8 +200,8 @@ mat = [mat_l;mat_u];
 mat(:,2) = mat(:,2)+0.75;
 
 % recall points
-pointsDeformed = mat(:,3:4)-[0,0.6];
-pointsBaseProfile = mat(:,1:2)-[0,0.6];
+pointsDeformed = mat(:,3:4);
+pointsBaseProfile = mat(:,1:2);
 
 % retrieve coefficients
 history_adj = readmatrix(simulationsDeformPath+"../DIRECT/history_direct.dat");
@@ -223,14 +223,35 @@ end
 legend
 
 %% generate 3 profile mesh
-N_profili = 3;
-theta_vec = linspace(0,-2*pi,N_profili+1); % senso orario per consistenza
+N_profili = 1;
+theta_vec = linspace(pi*3/2,-2*pi,N_profili+1); % senso orario per consistenza
 Rot = @(theta) [cos(theta) -sin(theta) 0; sin(theta) cos(theta) 0; 0 0 1];
 for i = 1:N_profili
     profili{i} = [Rot(theta_vec(i))*[pointsDeformed, zeros(size(pointsDeformed,1),1)]']';
     profili_nom{i} = [Rot(theta_vec(i))*[pointsBaseProfile, zeros(size(pointsBaseProfile,1),1)]']';
 end
 
+%% write the .geo points to file
+% nominal
+fid = fopen([num2str(N_profili),'_profile_generator_nominal.txt'],'w');
+for j = 1:length(profili)
+    for i = 1:size(profili{1},1)
+        fprintf(fid,'Point(%d) = {%.16f, %.16f, 0.0, h};\n',(j-1)*1000+i,profili_nom{j}(i,1),profili_nom{j}(i,2));
+    end
+end
+fclose(fid);
+
+% deformed
+fid = fopen([num2str(N_profili),'_profile_generator_deform.txt'],'w');
+for j = 1:length(profili)
+    for i = 1:size(profili{1},1)
+        fprintf(fid,'Point(%d) = {%.16f, %.16f, 0.0, h};\n',(j-1)*1000+i,profili{j}(i,1),profili{j}(i,2));
+    end
+end
+fclose(fid);
+
+
+%% plot the resulting positions
 figure
 hold on; grid on;
 for idx = 1:N_profili
@@ -246,13 +267,4 @@ end
 scatter(0,0)
 axis equal
 axis off
-exportgraphics(fig_posizione3profili, '01_posizione3profili.emf')
-
-fid = fopen([num2str(N_profili),'_profile_generator.txt'],'w');
-for j = 1:length(profili)
-    for i = 1:size(profili{1},1)
-        fprintf(fid,'Point(%d) = {%.16f, %.16f, 0.0, h};\n',(j-1)*1000+i,profili{j}(i,1),profili{j}(i,2));
-    end
-end
-fclose(fid);
-
+exportgraphics(fig_posizione3profili, imagesPath+"01_posizione3profili.emf")

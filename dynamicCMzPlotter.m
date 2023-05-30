@@ -9,11 +9,32 @@ clear; close all; clc;
 user = 'marco';
 user_settings;
 
-% select simulations to extract
-simulationsFolderPath = [   "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\";
-                            "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform2\";
-                            "E:\UNI - fisso\aeroacustica\unsteady_3_profili_nominal\";
-                           ];
+%% select simulations to extract
+%unsteady
+unstSimulationsFolderPath = [  "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\Unsteady\Unsteady_1_profilo_nominal_dt4\"];
+%                             "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\Unsteady\Unsteady_1_profilo_nominal_dt2\";
+%                             "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\Unsteady\Unsteady_1_profilo_nominal_dt1\";];
+
+simulationsNames = ["dt=4e-4","dt=2e-4","dt=1e-4"]; 
+
+
+% rrf mach
+rrfMachSimulationsFolderPath = ["C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\RRF\RRF_1P_MACH_0\";
+                         "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\RRF\RRF_1P_MACH_90\";
+                          "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\RRF\RRF_1P_MACH_180\";
+                         "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\RRF\RRF_1P_MACH_270\"];
+
+
+rrfMachNames = ["0", "90", "180", "270"];
+
+
+% rrf trans
+rrfTransSimulationsFolderPath = ["C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\RRF\RRF_1P_TRANS_0\";
+                             "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\RRF\RRF_1P_TRANS_90\";
+                             "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\RRF\RRF_1P_TRANS_180\";
+                             "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\RRF\RRF_1P_TRANS_270\";];
+rrfTransNames = ["0", "90", "180", "270"];
+
 
 % "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\";
 % "\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform6\";
@@ -22,30 +43,31 @@ simulationsFolderPath = [   "E:\UNI - fisso\aeroacustica\unsteady_3_profili_defo
 % "\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform7\"
 
 % settare questo per i nomi nei plot
-simulationsNames = ["3p deform6","3p deform2","3p nominal","1p deform7"]; 
 matlab_graphics;
 
-%% extract data
+%% extract data - unsteady
 colors = ['r','b','k','m'];
 omega = 21.33;
 % check how to extract automatically the value for dt
 dt_def = 8e-4;
 
-for j = 1:length(simulationsFolderPath)
-    if simulationsFolderPath(j) == "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform2\"
+for j = 1:length(unstSimulationsFolderPath)
+    if unstSimulationsFolderPath(j) == "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform2\" || unstSimulationsFolderPath(j) =="C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\Unsteady\Unsteady_1_profilo_nominal_dt1\"
         dt(j) = 1e-4;
+    elseif unstSimulationsFolderPath(j) == "E:\UNI - fisso\aeroacustica\unsteady_1_profilo_nominal\" || unstSimulationsFolderPath(j) =="C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\Unsteady\Unsteady_1_profilo_nominal_dt4\"
+        dt(j) = 4e-4;
     else
         dt(j) = 2e-4;
     end
 
-    history_files = dir(simulationsFolderPath(j)+"history*");
+    history_files = dir(unstSimulationsFolderPath(j)+"history*");
     len = 0;
     history = [];
     if length(history_files)~=1
         for i = 1:length(history_files)
     
-            h_p = readmatrix(simulationsFolderPath(j)+history_files(i).name);
-            if simulationsFolderPath(j)+history_files(i).name == "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\history_02334.dat"
+            h_p = readmatrix(unstSimulationsFolderPath(j)+history_files(i).name);
+            if unstSimulationsFolderPath(j)+history_files(i).name == "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\history_02334.dat"
                 h_p = h_p(1:2:end,:);
             end
             restart_iter = str2double(erase(history_files(i).name,["history_",".dat"]));
@@ -72,7 +94,7 @@ for j = 1:length(simulationsFolderPath)
         end
     else
            
-        history = readmatrix(simulationsFolderPath(j)+history_files.name);
+        history = readmatrix(unstSimulationsFolderPath(j)+history_files.name);
         iterations_lost(j) = 0;
         time_loss(j) = 0;
     end
@@ -88,7 +110,11 @@ for j = 1:length(simulationsFolderPath)
     t_vec{j} = [1:length(history(:,1))]*dt(j);
     angle{j} = rad2deg(t_vec{j} * omega);
 
-    CMz{j} = history(:,11)/0.75/0.075;
+    if unstSimulationsFolderPath(j) == "E:\UNI - fisso\aeroacustica\unsteady_1_profilo_nominal\" || unstSimulationsFolderPath(j) == "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\Unsteady\Unsteady_1_profilo_nominal_dt4\"
+        CMz{j} = history(:,11);
+    else
+        CMz{j} = history(:,11)/0.75/0.075;
+    end
     inner_iters{j} = history(:,1);
     rms_rho{j} = history(:,2);
     CD{j} = history(:,9);
@@ -119,28 +145,59 @@ for j = 1:length(simulationsFolderPath)
     clearvars history h_p
 end
 
-% RRF_CMz_trans_3 = 0.0609;
-% RRF_CMz_trans_1 = 0.0947;
-% RRF_CMz_mach = 0.147;
+%% extract data - RRF MACH
+RRF_CMz_mach = [];
+for j = 1:length(rrfMachSimulationsFolderPath)
+RRF_mach = readmatrix(rrfMachSimulationsFolderPath(j)+"history.dat");
+RRF_CMz_mach(j) = RRF_mach(end,end-1);
+end
+
+%% extract data - RRF TRANS
+RRF_CMz_trans = [];
+for j = 1:length(rrfTransSimulationsFolderPath)
+RRF_trans = readmatrix(rrfTransSimulationsFolderPath(j)+"history.dat");
+RRF_CMz_trans(j) = RRF_trans(end,end-1);
+end
 
 %% plots
+
+angRRF = [0, 90, 180, 270];
+round = 2;
+% general use
 figure('Position',[100,100,600,400])
-subplot(2,1,1)
-for j = 1:length(simulationsFolderPath)
-    plot(t_vec{j}+time_loss(j),CMz{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
+for j = 1:length(unstSimulationsFolderPath)
+    plot(angle{j}+time_loss(j),CMz{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
     hold on; 
     % yline(RRF_CMz_trans_1,'k--',"RRF trans ="+num2str(RRF_CMz_trans_1),'HandleVisibility','off')
     if ~isempty(CMz_cycle_avg{j})
         yline(CMz_cycle_avg{j}(end),[colors(j),'--'],"CMz avg = "+num2str(CMz_cycle_avg{j}(end)),'HandleVisibility','off')
-        xline(t_vec{j}(end-N_rounds_to_average(j)*N_iter_per_round(j)),[colors(j),'-'],"AFH",'HandleVisibility','off')
+        xline(angle{j}(end-N_rounds_to_average(j)*N_iter_per_round(j)),[colors(j),'-'],"AFH",'HandleVisibility','off')
+    end
+end
+if ~isempty(RRF_CMz_mach)
+    for j = 1:length(rrfMachSimulationsFolderPath)
+        scatter(angRRF(j)+(round-1)*360,RRF_CMz_mach(j),[colors(j),'s'],"DisplayName","RRF Mach at "+rrfMachNames(j))
+    end
+end
+if ~isempty(RRF_CMz_trans)
+    for j = 1:length(rrfMachSimulationsFolderPath)
+        scatter(angRRF(j)+(round-1)*360,RRF_CMz_trans(j),[colors(j),'^'],"DisplayName","RRF Trans at "+rrfTransNames(j))
     end
 end
 legend
-subplot(2,1,2)
-for j = 1:length(simulationsFolderPath)
-    plot(t_vec{j}+time_loss(j),rms_rho{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
-    hold on; 
+
+
+% timestep convergence
+idx_cut = [4520/4,4520/2,4520];
+
+fig_timeStepConvergence = figure;%('Position',[100,100,600,400]);
+for j = 1:length(unstSimulationsFolderPath)
+    plot(t_vec{j}(idx_cut(j)+1:idx_cut(j)+N_iter_per_round(j))+time_loss(j),CMz{j}(idx_cut(j)+1:idx_cut(j)+N_iter_per_round(j)),[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
+    hold on; grid on;
 end
-yline(-8,'k--',"target",'HandleVisibility','off')
+xlim([min(t_vec{1}(idx_cut(1)+1:idx_cut(1)+N_iter_per_round(1))),max(t_vec{1}(idx_cut(1)+1:idx_cut(1)+N_iter_per_round(1)))])
+xlabel('Time [s]')
+ylabel('CMz [-]')
 legend
+exportgraphics(fig_timeStepConvergence,imagesPath+"08_timeStepConv.emf")
 

@@ -22,7 +22,7 @@ main_folder = pwd;
 
 % who uses this script? select user
 user = 'marco';
-
+user_settings;
 
 
 
