@@ -160,44 +160,50 @@ RRF_CMz_trans(j) = RRF_trans(end,end-1);
 end
 
 %% plots
-
-angRRF = [0, 90, 180, 270];
+markers = 'sd^o';
+angRRF = deg2rad([0, 90, 180, 270])./omega;
 round = 2;
+
 % general use
-figure('Position',[100,100,600,400])
+fig_CMz_RRF_vs_unsteady =figure('Position',[100,100,900,600]);
 for j = 1:length(unstSimulationsFolderPath)
-    plot(angle{j}+time_loss(j),CMz{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
+    plot(t_vec{j}+time_loss(j),CMz{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
     hold on; 
     % yline(RRF_CMz_trans_1,'k--',"RRF trans ="+num2str(RRF_CMz_trans_1),'HandleVisibility','off')
     if ~isempty(CMz_cycle_avg{j})
-        yline(CMz_cycle_avg{j}(end),[colors(j),'--'],"CMz avg = "+num2str(CMz_cycle_avg{j}(end)),'HandleVisibility','off')
-        xline(angle{j}(end-N_rounds_to_average(j)*N_iter_per_round(j)),[colors(j),'-'],"AFH",'HandleVisibility','off')
+        yline(CMz_cycle_avg{j}(end),[colors(j),'--'],'DisplayName',"CMz avg = "+num2str(CMz_cycle_avg{j}(end)))
+        xline(t_vec{j}(end-N_rounds_to_average(j)*N_iter_per_round(j)),[colors(j),'-'],"AFH",'HandleVisibility','off')
     end
 end
 if ~isempty(RRF_CMz_mach)
     for j = 1:length(rrfMachSimulationsFolderPath)
-        scatter(angRRF(j)+(round-1)*360,RRF_CMz_mach(j),[colors(j),'s'],"DisplayName","RRF Mach at "+rrfMachNames(j))
+        scatter(angRRF(j)+(round-1)*2*pi/omega,RRF_CMz_mach(j),[colors(j),markers(j)],"DisplayName","RRF at "+rrfMachNames(j)+"°")
     end
 end
-if ~isempty(RRF_CMz_trans)
-    for j = 1:length(rrfMachSimulationsFolderPath)
-        scatter(angRRF(j)+(round-1)*360,RRF_CMz_trans(j),[colors(j),'^'],"DisplayName","RRF Trans at "+rrfTransNames(j))
-    end
-end
+% if ~isempty(RRF_CMz_trans)
+%     for j = 1:length(rrfMachSimulationsFolderPath)
+%         scatter(angRRF(j)+(round-1)*360,RRF_CMz_trans(j),[colors(j),'^'],"DisplayName","RRF Trans at "+rrfTransNames(j))
+%     end
+% end
 legend
-
-
-% timestep convergence
-idx_cut = [4520/4,4520/2,4520];
-
-fig_timeStepConvergence = figure;%('Position',[100,100,600,400]);
-for j = 1:length(unstSimulationsFolderPath)
-    plot(t_vec{j}(idx_cut(j)+1:idx_cut(j)+N_iter_per_round(j))+time_loss(j),CMz{j}(idx_cut(j)+1:idx_cut(j)+N_iter_per_round(j)),[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
-    hold on; grid on;
-end
-xlim([min(t_vec{1}(idx_cut(1)+1:idx_cut(1)+N_iter_per_round(1))),max(t_vec{1}(idx_cut(1)+1:idx_cut(1)+N_iter_per_round(1)))])
+ylim([-0.2, 0.4])
+xlim(deg2rad([340, 700])./omega)
 xlabel('Time [s]')
 ylabel('CMz [-]')
-legend
-exportgraphics(fig_timeStepConvergence,imagesPath+"08_timeStepConv.emf")
+% exportgraphics(fig_CMz_RRF_vs_unsteady,imagesPath+"11_CMz_RRF_vs_unsteady.emf")
+
+
+% % timestep convergence
+% idx_cut = [4520/4,4520/2,4520];
+% 
+% fig_timeStepConvergence = figure;%('Position',[100,100,600,400]);
+% for j = 1:length(unstSimulationsFolderPath)
+%     plot(t_vec{j}(idx_cut(j)+1:idx_cut(j)+N_iter_per_round(j))+time_loss(j),CMz{j}(idx_cut(j)+1:idx_cut(j)+N_iter_per_round(j)),[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
+%     hold on; grid on;
+% end
+% xlim([min(t_vec{1}(idx_cut(1)+1:idx_cut(1)+N_iter_per_round(1))),max(t_vec{1}(idx_cut(1)+1:idx_cut(1)+N_iter_per_round(1)))])
+% xlabel('Time [s]')
+% ylabel('CMz [-]')
+% legend
+% exportgraphics(fig_timeStepConvergence,imagesPath+"08_timeStepConv.emf")
 

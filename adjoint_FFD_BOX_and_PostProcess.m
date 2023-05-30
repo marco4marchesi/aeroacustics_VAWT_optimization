@@ -224,7 +224,8 @@ legend
 
 %% generate 3 profile mesh
 N_profili = 1;
-theta_vec = linspace(pi*3/2,-2*pi,N_profili+1); % senso orario per consistenza
+phase = deg2rad(0);
+theta_vec = linspace(0+phase,-2*pi+phase,N_profili+1); % senso orario per consistenza
 Rot = @(theta) [cos(theta) -sin(theta) 0; sin(theta) cos(theta) 0; 0 0 1];
 for i = 1:N_profili
     profili{i} = [Rot(theta_vec(i))*[pointsDeformed, zeros(size(pointsDeformed,1),1)]']';

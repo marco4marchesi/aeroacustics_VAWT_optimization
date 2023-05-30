@@ -6,8 +6,13 @@ function that retrieves all the acoustic interesting properties and saves
 them in the struct flow
 %}
 
+
 % define some useful data
-dt_ref = 8e-4;
+dt_ref = 8e-4; % [s] time for a rotation of one degree (circa) which we used as baseline value
+fs = 1/dt; % sample frequency
+L = 1.5; % [m] diameter
+U = 8; % [m/s] , asymptotic flow velocity
+
 N_iter_per_round = dt_ref/dt * 368;
 % define transformation to decibel
 spl = @(x) 20*log10(x/(20e-6));
@@ -15,6 +20,12 @@ spl = @(x) 20*log10(x/(20e-6));
 % define rotation speed
 omega=21.33;
 sound_speed = sqrt(1.4*287*288.15);
+
+% define quantities for the psd
+resolutonReqd = 0.1; % [Hz]
+NFFT = fs / resolutonReqd;
+NFFT = 2^nextpow2(NFFT);
+overlap = 0;
 
 % loop on different radius length
 obs_folders = dir(folder+"\observer_*");
@@ -52,17 +63,33 @@ for i = 1:length(obs_folders)
     flow.dB_total{i} = load(folder+"/"+obs_folders(i).name+"/pp_FWH");
     
     % recall fwh in time domain
-    for k = 1:n_obs(i)
-        ppName = "pp"+compose("%03d",k)+"r"+num2str(radiuses{i});
-        flow.(ppName){i} = readmatrix(folder+"/"+obs_folders(i).name+"/pp_FWH_"+compose("%03d",k)+"_Zone_0");
+    angles = [1,31];
+    for k = 1:length(angles)
+        ppName = "pp"+compose("%03d",angles(k))+"r"+num2str(radiuses{i});
+        flow.(ppName) = readmatrix(folder+"/"+obs_folders(i).name+"/pp_FWH_"+compose("%03d",angles(k))+"_Zone_0");
+        last_lap_indexes = [length(flow.(ppName))-N_iter_per_round+1,length(flow.(ppName))];
+        
+        % fft computation
+        fftName = ppName+"_fft";
+        fftName_f = ppName+"_fft_f";
+        fftName_St = ppName + "_fft_St";
+        [flow.(fftName_f),flow.(fftName)] = fourierSingleSided(fs, flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),3)-mean(flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),3)));
+        flow.(fftName_St)= flow.(fftName_f).*(L/U);
+        
+        % PSD computation
+        psdName = ppName + "_PSD";
+        psdName_f = ppName + "_PSD_f";
+        psdName_St = ppName + "_PSD_St";
+        window = length(flow.(ppName))/2;
+        [flow.(psdName),flow.(psdName_f)] = pwelch(flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),3), window, overlap, NFFT, fs);
+        flow.(psdName_St)= flow.(psdName_f).*(L/U);
     end
+       
     
-    last_lap_indexes = length(flow.(ppName){i})-N_iter_per_round:length(flow.(ppName){i});
-    ppName_f = ppName+"_f";
-    ppName_fft = ppName+"_fft";
-    %[flow.(ppName_f){i},flow.(ppName_fft){i}] = fourierSingleSided(1/(4e-4), flow.(ppName){i}(last_lap_indexes,3)-mean(flow.(ppName){i}(last_lap_indexes,3)));
 end
 % retrieve aerodynamic coefficients over cycle
+
+
 
 % ----------------------------warning-----------------------%
 % mettere che controlla se ci sono history restart e prende l'ultimo, se no
@@ -111,6 +138,8 @@ history_files = dir(folder+"\history*");
         time_loss = 0;
     end
 
+if history(10:100,1)~=[9:99]' % this condition happens only for unsteady simulations
+
 
 flow.CD = history(end-(N_iter_per_round-1):end,9);
 flow.CL = history(end-(N_iter_per_round-1):end,10);
@@ -152,44 +181,4 @@ flow.retarded_time = flow.time + time_delay';
 
 flow.equivalent_speed = 0.024*sound_speed - 21.33*0.75*cos(21.33*flow.time);
 
-%%
-
-
-
-%%format long
-%%error=[100.*(flow.SPL-flowD.SPL)./(flow.SPL)];
-%%media=mean(abs(error));
-%%
-% obs1=readtable(folder+"/pp_FWH_006_Zone_0");
-% FS=10;
-% figure
-% tiledlayout(1,2)
-% nexttile
-% hold on
-% plot(obs1.Time,obs1.P_Fluctuation);
-% legend("Mic 135°");
-% title("Pressure Fluctuation");
-% xlabel('time(s)')
-% ylabel("p'")
-% ax = gca;
-% ax.FontSize = FS;
-% 
-% fs = 1/(obs1.Time(2)-obs1.Time(1));
-% 
-% resolutonReqd = 0.1; % [Hz]
-% NFFT = fs / resolutonReqd;
-% NFFT = 2^nextpow2(NFFT);
-% window = length(obs1.Time)/2;
-% overlap = 0;
-% 
-% 
-% [pxx1, f1] = pwelch(obs1.P_Fluctuation, window,overlap,NFFT, fs);
-% nexttile
-% loglog(f1, pxx1)
-% legend("Mic 135°");
-% title("PSD");
-% xlabel('Frequency')
-% ax = gca;
-% ax.FontSize = FS;
-%%
-
+end
