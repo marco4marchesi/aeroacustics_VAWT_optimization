@@ -11,11 +11,11 @@ user_settings;
 
 %% select simulations to extract
 %unsteady
-unstSimulationsFolderPath = [  "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\Unsteady\Unsteady_1_profilo_nominal_dt4\"];
-%                             "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\Unsteady\Unsteady_1_profilo_nominal_dt2\";
-%                             "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\Unsteady\Unsteady_1_profilo_nominal_dt1\";];
+unstSimulationsFolderPath = ["\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_surface_1p\";
+                            "E:\UNI - fisso\aeroacustica\unsteady_1_profilo_nominal_dt2\";
+                            "E:\UNI - fisso\aeroacustica\unsteady_3_profili_nominal\";];
 
-simulationsNames = ["dt=4e-4","dt=2e-4","dt=1e-4"]; 
+simulationsNames = ["Hyb nom","1p Nom","3p Nom", "3p nom"]; 
 
 
 % rrf mach
@@ -35,7 +35,7 @@ rrfTransSimulationsFolderPath = ["C:\Users\marco\OneDrive - Politecnico di Milan
                              "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\RRF\RRF_1P_TRANS_270\";];
 rrfTransNames = ["0", "90", "180", "270"];
 
-
+% "E:\UNI - fisso\aeroacustica\unsteady_1_profilo_deform2\";
 % "E:\UNI - fisso\aeroacustica\unsteady_3_profili_deform6\";
 % "\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform6\";
 % "\\wsl.localhost\Ubuntu-20.04\home\marco\unsteady_3_profili_deform1\";
@@ -90,13 +90,24 @@ for j = 1:length(unstSimulationsFolderPath)
                 else
                     time_loss(j) = 0;
                 end
+                angle_loss(j) = time_loss(j)*omega;
             end
         end
     else
            
         history = readmatrix(unstSimulationsFolderPath(j)+history_files.name);
-        iterations_lost(j) = 0;
-        time_loss(j) = 0;
+        if contains(history_files.name,'_')
+            iterations_lost(j) = str2double(erase(history_files(end).name,["history_",".dat"]));             
+            time_loss(j) = (iterations_lost(j)-1472) * dt(j);
+          %  time_loss(j) = (iterations_lost(j)) * dt(j);
+            angle_loss(j) = rad2deg(time_loss(j)*omega);
+        else
+            iterations_lost(j) = 0;
+            time_loss(j) = 0;
+            angle_loss(j) = 0;
+        end
+        
+        
     end
     %% adjust the coefficient   
     
@@ -112,13 +123,17 @@ for j = 1:length(unstSimulationsFolderPath)
 
     if unstSimulationsFolderPath(j) == "E:\UNI - fisso\aeroacustica\unsteady_1_profilo_nominal\" || unstSimulationsFolderPath(j) == "C:\Users\marco\OneDrive - Politecnico di Milano\MAGISTRALE\QuartoSemestre\Aeroacoustics\aeroacoustic project\Simulazioni\Unsteady\Unsteady_1_profilo_nominal_dt4\"
         CMz{j} = history(:,11);
+        CD{j} = history(:,9);
+        CL{j} = history(:,10);
     else
         CMz{j} = history(:,11)/0.75/0.075;
+        CD{j} = history(:,9)/0.075;
+        CL{j} = history(:,10)/0.075;
     end
     inner_iters{j} = history(:,1);
     rms_rho{j} = history(:,2);
-    CD{j} = history(:,9);
-    CL{j} = history(:,10);
+    
+    
     %% post process
     time_ratio = dt_def/dt(j);
     N_iter_per_round(j) = 368 * time_ratio;
@@ -129,6 +144,8 @@ for j = 1:length(unstSimulationsFolderPath)
         N_rounds_to_average(j) =1;
         starting_iter = size(history,1)-N_iter_per_round(j)*N_rounds_to_average(j);
         CMz_cycle_avg{j} = mean(CMz{j}(starting_iter + 1:starting_iter+N_iter_per_round(j)));
+        CD_cycle_avg{j} = mean(CD{j}(starting_iter + 1:starting_iter+N_iter_per_round(j)));
+        CL_cycle_avg{j} = mean(CL{j}(starting_iter + 1:starting_iter+N_iter_per_round(j)));
         CMz_excursion{j} = max(CMz{j}(starting_iter + 1:starting_iter+N_iter_per_round(j)))-min(CMz{j}(starting_iter + 1:starting_iter+N_iter_per_round(j)));
         CMz_rms{j} = rms(CMz{j}(starting_iter + 1:starting_iter+N_iter_per_round(j))-mean(CMz{j}(starting_iter + 1:starting_iter+N_iter_per_round(j))));
     
@@ -150,6 +167,8 @@ RRF_CMz_mach = [];
 for j = 1:length(rrfMachSimulationsFolderPath)
 RRF_mach = readmatrix(rrfMachSimulationsFolderPath(j)+"history.dat");
 RRF_CMz_mach(j) = RRF_mach(end,end-1);
+RRF_CL_mach(j) = RRF_mach(end,end-2);
+RRF_CD_mach(j) = RRF_mach(end,end-3);
 end
 
 %% extract data - RRF TRANS
@@ -157,41 +176,88 @@ RRF_CMz_trans = [];
 for j = 1:length(rrfTransSimulationsFolderPath)
 RRF_trans = readmatrix(rrfTransSimulationsFolderPath(j)+"history.dat");
 RRF_CMz_trans(j) = RRF_trans(end,end-1);
+RRF_CL_trans(j) = RRF_trans(end,end-2);
+RRF_CD_trans(j) = RRF_trans(end,end-3);
 end
 
 %% plots
 markers = 'sd^o';
-angRRF = deg2rad([0, 90, 180, 270])./omega;
+angRRF = [0, 90, 180, 270];
 round = 2;
 
-% general use
+% CMz
 fig_CMz_RRF_vs_unsteady =figure('Position',[100,100,900,600]);
 for j = 1:length(unstSimulationsFolderPath)
-    plot(t_vec{j}+time_loss(j),CMz{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
+    plot(angle{j}+angle_loss(j)-(round-1)*360,CMz{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
     hold on; 
-    % yline(RRF_CMz_trans_1,'k--',"RRF trans ="+num2str(RRF_CMz_trans_1),'HandleVisibility','off')
+%     yline(RRF_CMz_trans_1,'k--',"RRF trans ="+num2str(RRF_CMz_trans_1),'HandleVisibility','off')
     if ~isempty(CMz_cycle_avg{j})
         yline(CMz_cycle_avg{j}(end),[colors(j),'--'],'DisplayName',"CMz avg = "+num2str(CMz_cycle_avg{j}(end)))
-        xline(t_vec{j}(end-N_rounds_to_average(j)*N_iter_per_round(j)),[colors(j),'-'],"AFH",'HandleVisibility','off')
+%         xline(t_vec{j}(end-N_rounds_to_average(j)*N_iter_per_round(j)),[colors(j),'-'],"AFH",'HandleVisibility','off')
     end
 end
-if ~isempty(RRF_CMz_mach)
-    for j = 1:length(rrfMachSimulationsFolderPath)
-        scatter(angRRF(j)+(round-1)*2*pi/omega,RRF_CMz_mach(j),[colors(j),markers(j)],"DisplayName","RRF at "+rrfMachNames(j)+"°")
-    end
-end
-% if ~isempty(RRF_CMz_trans)
-%     for j = 1:length(rrfMachSimulationsFolderPath)
-%         scatter(angRRF(j)+(round-1)*360,RRF_CMz_trans(j),[colors(j),'^'],"DisplayName","RRF Trans at "+rrfTransNames(j))
-%     end
+% if ~isempty(RRF_CMz_mach)
+%     scatter(angRRF,RRF_CMz_mach,'gs',"DisplayName","RRF Mach")  
 % end
-legend
-ylim([-0.2, 0.4])
-xlim(deg2rad([340, 700])./omega)
-xlabel('Time [s]')
+% if ~isempty(RRF_CMz_trans)
+%     scatter(angRRF,RRF_CMz_trans,'b^',"DisplayName","RRF Trans")    
+% end
+legend('Location','northeast')
+ylim([-0.3, 0.5])
+xlim([0, 1080])
+xlabel('Angle [°]')
 ylabel('CMz [-]')
-% exportgraphics(fig_CMz_RRF_vs_unsteady,imagesPath+"11_CMz_RRF_vs_unsteady.emf")
+% exportgraphics(fig_CMz_RRF_vs_unsteady,imagesPath+"22_CMz_nominal_vs_deform6.emf")
 
+
+%% CD
+fig_CD_RRF_vs_unsteady =figure('Position',[100,100,900,600]);
+for j = 1:length(unstSimulationsFolderPath)
+    plot(angle{j}+angle_loss(j)-(round-1)*360,CD{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
+    hold on; 
+    % yline(RRF_CMz_trans_1,'k--',"RRF trans ="+num2str(RRF_CMz_trans_1),'HandleVisibility','off')
+    if ~isempty(CD_cycle_avg{j})
+        yline(CD_cycle_avg{j}(end),[colors(j),'--'],'DisplayName',"CD avg = "+num2str(CD_cycle_avg{j}(end)))
+%         xline(t_vec{j}(end-N_rounds_to_average(j)*N_iter_per_round(j)),[colors(j),'-'],"AFH",'HandleVisibility','off')
+    end
+end
+if ~isempty(RRF_CD_mach)
+    scatter(angRRF,RRF_CD_mach,'gs',"DisplayName","RRF Mach")
+end
+if ~isempty(RRF_CD_trans)
+    scatter(angRRF,RRF_CD_trans,'b^',"DisplayName","RRF Trans")
+end
+legend('Location','northeast')
+% ylim([-0.3, 1])
+xlim([0, 1080])
+xlabel('Angle [°]')
+ylabel('CD [-]')
+% exportgraphics(fig_CD_RRF_vs_unsteady,imagesPath+"11_CD_RRF_vs_unsteady.emf")
+
+
+%CL
+fig_CL_RRF_vs_unsteady =figure('Position',[100,100,900,600]);
+for j = 1:length(unstSimulationsFolderPath)
+    plot(angle{j}+angle_loss(j)-(round-1)*360,CL{j},[colors(j),'-'],'DisplayName',"Unsteady "+simulationsNames(j))
+    hold on; 
+    % yline(RRF_CMz_trans_1,'k--',"RRF trans ="+num2str(RRF_CMz_trans_1),'HandleVisibility','off')
+    if ~isempty(CL_cycle_avg{j})
+        yline(CL_cycle_avg{j}(end),[colors(j),'--'],'DisplayName',"CL avg = "+num2str(CL_cycle_avg{j}(end)))
+%         xline(t_vec{j}(end-N_rounds_to_average(j)*N_iter_per_round(j)),[colors(j),'-'],"AFH",'HandleVisibility','off')
+    end
+end
+if ~isempty(RRF_CL_mach)
+    scatter(angRRF,RRF_CL_mach,'gs',"DisplayName","RRF Mach")
+end
+if ~isempty(RRF_CL_trans)
+    scatter(angRRF,RRF_CL_trans,'b^',"DisplayName","RRF Trans")
+end
+legend
+% ylim([-0.3, 1])
+xlim([0, 1080])
+xlabel('Angle [°]')
+ylabel('CL [-]')
+% exportgraphics(fig_CMz_RRF_vs_unsteady,imagesPath+"11_CL_RRF_vs_unsteady.emf")
 
 % % timestep convergence
 % idx_cut = [4520/4,4520/2,4520];

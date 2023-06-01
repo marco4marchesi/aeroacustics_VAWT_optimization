@@ -25,7 +25,7 @@ sound_speed = sqrt(1.4*287*288.15);
 resolutonReqd = 0.1; % [Hz]
 NFFT = fs / resolutonReqd;
 NFFT = 2^nextpow2(NFFT);
-overlap = 0;
+overlap = 0.5;
 
 % loop on different radius length
 obs_folders = dir(folder+"\observer_*");
@@ -73,7 +73,11 @@ for i = 1:length(obs_folders)
         fftName = ppName+"_fft";
         fftName_f = ppName+"_fft_f";
         fftName_St = ppName + "_fft_St";
+        fftThickness = ppName + "_fftThick";
+        fftLoading = ppName + "_fftLoad";
         [flow.(fftName_f),flow.(fftName)] = fourierSingleSided(fs, flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),3)-mean(flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),3)));
+        [~,flow.(fftThickness)] = fourierSingleSided(fs, flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),4)-mean(flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),4)));
+        [~,flow.(fftLoading)] = fourierSingleSided(fs, flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),5)-mean(flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),5)));
         flow.(fftName_St)= flow.(fftName_f).*(L/U);
         
         % PSD computation
@@ -81,7 +85,7 @@ for i = 1:length(obs_folders)
         psdName_f = ppName + "_PSD_f";
         psdName_St = ppName + "_PSD_St";
         window = length(flow.(ppName))/2;
-        [flow.(psdName),flow.(psdName_f)] = pwelch(flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),3), window, overlap, NFFT, fs);
+        [flow.(psdName),flow.(psdName_f)] = pwelch(flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),3)-mean(flow.(ppName)(last_lap_indexes(1):last_lap_indexes(2),3)), window, overlap, NFFT, fs);
         flow.(psdName_St)= flow.(psdName_f).*(L/U);
     end
        
@@ -154,7 +158,6 @@ flow.dCL = diff(flow.CL)/dt;
 flow.dCMz = diff(flow.CMz)/dt;
 flow.dCL_phase = wrapTo2Pi(omega*dt*length(history(:,1)))+[2:N_iter_per_round]*omega*dt+pi/2;
 
-
 % rms varie
 flow.CD_RMS = rms(flow.CD);
 flow.dCD_RMS = rms(flow.dCD);
@@ -166,7 +169,9 @@ flow.dCMz_RMS = rms(flow.dCMz);
 flow.CF = sqrt(flow.CL.^2 + flow.CD.^2);
 flow.dCF = diff(flow.CF)/dt;
 
-
+% fft CL
+[flow.CL_f,flow.CL_fft] = fourierSingleSided(fs, flow.CL-mean(flow.CL));
+[flow.CF_f,flow.CF_fft] = fourierSingleSided(fs, flow.CF-mean(flow.CF));
 %%
 chosen_obs = [120 10]; % 1° numero è quello dell'osservatore, 2° è il raggio
 

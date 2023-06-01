@@ -212,15 +212,20 @@ CMz_start = history_start(end,16);
 disp("CMz start = "+num2str(CMz_start))
 disp("CMz adjoint = "+num2str(CMz_adj))
 
-figure
-plot(pointsBaseProfile(:,1),pointsBaseProfile(:,2),"DisplayName","Initial")
+fig_nomVsAdjoint = figure('Position',[100,100,20*60,8*60]);
+% plot((pointsBaseProfile(:,1)-min(pointsBaseProfile(:,1)))/0.075,(pointsBaseProfile(:,2)-0.75)/0.075,"DisplayName","Nominal")
 hold on;
-plot(pointsDeformed(:,1),pointsDeformed(:,2),"DisplayName","Adjoint result")
+plot((pointsDeformed(:,1)-min(pointsDeformed(:,1)))/0.075,(pointsDeformed(:,2)-0.75)/0.075,'r',"DisplayName","Deform 6",'LineWidth',5)
 axis equal
-for i = 1:length(lines_bott)
-    plot([lines_bott(i,1),lines_up(i,1)],[lines_bott(i,2),lines_up(i,2)],'r--','LineWidth',1,'HandleVisibility','off')
-end
-legend
+axis off
+% for i = 1:length(lines_bott)
+%     plot([lines_bott(i,1),lines_up(i,1)],[lines_bott(i,2),lines_up(i,2)],'r--','LineWidth',1,'HandleVisibility','off')
+% end
+xlabel('x/c')
+ylabel('y/c')
+% legend
+exportgraphics(fig_nomVsAdjoint,imagesPath+"17_Adjoint6.emf")
+
 
 %% generate 3 profile mesh
 N_profili = 1;

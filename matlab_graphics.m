@@ -5,7 +5,7 @@ Set graphical values for better looking plots
 %% set some values
 LW = 2.5;
 FS = 16;
-MS = 8;
+MS = 6;
 
 %% Interpreter:
 
